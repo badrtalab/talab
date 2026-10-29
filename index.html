@@ -1,11 +1,40 @@
+
 <!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>Talab</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سلسلة تعلب - Talab</title>
+<style>
+body { background:#0f0f0f; color:white; font-family:tahoma; text-align:center; margin:0; padding:20px; }
+h1 { color:#ffcc00; font-size:40px; margin-top:20px; text-shadow:0 0 10px #ffcc00; }
+#game { background:#1e1e1e; max-width:400px; margin:20px auto; padding:20px; border-radius:20px; border:2px solid #ffcc00; }
+button { background:#ffcc00; color:black; border:none; padding:15px 25px; font-size:20px; border-radius:12px; cursor:pointer; margin:10px; font-weight:bold; width:90%; }
+button:active { transform:scale(0.95); }
+#score { font-size:28px; margin:15px; color:#00ff88; }
+#fox { font-size:80px; animation: bounce 1s infinite; }
+@keyframes bounce { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-15px) } }
+p { color:#aaa; }
+</style>
 </head>
-<body style="text-align:center; margin-top:100px; font-family:sans-serif;">
-<h1 style="color:#0a7cff;">موقع طلب شغال يا بدر! 🔥</h1>
-<p>أول خطوة خلصت بنجاح</p>
+<body>
+<h1>🦊 سلسلة تعلب</h1>
+<div id="game">
+<div id="fox">🦊</div>
+<div id="score">النقاط: 0</div>
+<button onclick="addPoint()">دوس واجمع تعلب 🦊</button>
+<button onclick="resetGame()" style="background:#333; color:white; font-size:16px;">إعادة</button>
+<p>لعبة بدر طلب الرسمية</p>
+<p>كل دوسة = نقطة</p>
+</div>
+<script>
+let points = 0;
+function addPoint() {
+  points++;
+  document.getElementById('score').innerText = 'النقاط: ' + points;
+  if(points % 10 == 0) { document.getElementById('fox').innerText = '🔥🦊🔥'; setTimeout(()=>{ document.getElementById('fox').innerText='🦊'; }, 300); }
+}
+function resetGame() { points = 0; document.getElementById('score').innerText = 'النقاط: 0'; }
+</script>
 </body>
 </html>
