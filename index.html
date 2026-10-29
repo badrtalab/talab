@@ -1,40 +1,162 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>سلسلة تعلب - Talab</title>
+<title>سلسلة تعلب - ألغاز لا نهائية</title>
 <style>
-body { background:#0f0f0f; color:white; font-family:tahoma; text-align:center; margin:0; padding:20px; }
-h1 { color:#ffcc00; font-size:40px; margin-top:20px; text-shadow:0 0 10px #ffcc00; }
-#game { background:#1e1e1e; max-width:400px; margin:20px auto; padding:20px; border-radius:20px; border:2px solid #ffcc00; }
-button { background:#ffcc00; color:black; border:none; padding:15px 25px; font-size:20px; border-radius:12px; cursor:pointer; margin:10px; font-weight:bold; width:90%; }
-button:active { transform:scale(0.95); }
-#score { font-size:28px; margin:15px; color:#00ff88; }
-#fox { font-size:80px; animation: bounce 1s infinite; }
-@keyframes bounce { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-15px) } }
-p { color:#aaa; }
+body{background:#0f0f0f;color:#fff;font-family:tahoma;text-align:center;margin:0;padding:15px}
+h1{color:#ffcc00;font-size:32px;text-shadow:0 0 10px #ffcc00;margin:10px}
+#game{background:#1a1a1a;max-width:480px;margin:15px auto;padding:20px;border-radius:22px;border:2px solid #ffcc00;box-shadow:0 0 20px rgba(255,204,0,.2)}
+#algo{background:#000;color:#00ff88;padding:12px;border-radius:10px;font-family:monospace;font-size:18px;margin:10px 0;direction:ltr}
+#question{font-size:26px;margin:15px 0;min-height:60px}
+input{width:80%;padding:15px;font-size:22px;border-radius:12px;border:2px solid #ffcc00;background:#222;color:#fff;text-align:center}
+button{background:#ffcc00;color:#000;border:none;padding:14px 20px;font-size:18px;border-radius:12px;cursor:pointer;margin:8px;font-weight:bold}
+button:active{transform:scale(.95)}
+#score{font-size:18px;color:#aaa;display:flex;justify-content:space-between}
+#score b{color:#ffcc00}
+#fox{font-size:60px}
+.correct{animation:pop .3s} @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+#hint{color:#ffaa00;font-size:14px;min-height:20px}
 </style>
 </head>
 <body>
-<h1>🦊 سلسلة تعلب</h1>
+<h1>🦊 تعلب - ألغاز لا تنتهي</h1>
 <div id="game">
 <div id="fox">🦊</div>
-<div id="score">النقاط: 0</div>
-<button onclick="addPoint()">دوس واجمع تعلب 🦊</button>
-<button onclick="resetGame()" style="background:#333; color:white; font-size:16px;">إعادة</button>
-<p>لعبة بدر طلب الرسمية</p>
-<p>كل دوسة = نقطة</p>
+<div id="score"><span>النقاط: <b id="pts">0</b></span><span>المستوى: <b id="lvl">1</b></span><span>متتالي: <b id="streak">0</b></span></div>
+<div id="algo">خوارزمية اللغز</div>
+<div id="question">جاري توليد لغز...</div>
+<div id="hint"></div>
+<input id="ans" type="number" placeholder="اكتب الإجابة هنا" inputmode="numeric">
+<br>
+<button onclick="check()">تحقق ✅</button>
+<button onclick="newPuzzle()" style="background:#333;color:#fff">تخطي ⏭️</button>
+<button onclick="showHint()" style="background:#222;color:#ffaa00">تلميح 💡</button>
+<p style="color:#666;font-size:12px">الغاز بخوارزميات حية: × ÷ + تربيع √ متتالية</p>
 </div>
+
 <script>
-let points = 0;
-function addPoint() {
-  points++;
-  document.getElementById('score').innerText = 'النقاط: ' + points;
-  if(points % 10 == 0) { document.getElementById('fox').innerText = '🔥🦊🔥'; setTimeout(()=>{ document.getElementById('fox').innerText='🦊'; }, 300); }
+let pts=0,lvl=1,streak=0,curAns=0,curHint='';
+const algoEl=document.getElementById('algo');
+const qEl=document.getElementById('question');
+const hintEl=document.getElementById('hint');
+const ptsEl=document.getElementById('pts');
+const lvlEl=document.getElementById('lvl');
+const streakEl=document.getElementById('streak');
+const foxEl=document.getElementById('fox');
+const ansInput=document.getElementById('ans');
+
+function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+
+function newPuzzle(){
+  hintEl.textContent=''; ansInput.value=''; ansInput.focus();
+  const type = rand(1,7);
+  let a = rand(2, lvl+5);
+  let qText='', formula='';
+
+  if(type===1){ // ضرب + جمع متغير
+    let mul=rand(2,4+Math.floor(lvl/2)), add=rand(1,10);
+    let s1=a, s2=s1*mul+add, s3=s2*mul+add, s4=s3*mul+add;
+    curAns=s4*mul+add;
+    formula=`f(n) = f(n-1) × ${mul} + ${add}`;
+    qText=`${s1} , ${s2} , ${s3} , ${s4} , ؟`;
+    curHint=`كل رقم = اللي قبله × ${mul} + ${add}`;
+  }
+  else if(type===2){ // قسمة + طرح
+    let div=rand(2,3), start=rand(50,150)+lvl*10;
+    if(start%div!==0) start+= (div - start%div);
+    let s1=start, s2=Math.floor(s1/div)-rand(1,3), s3=Math.floor(s2/div)-rand(1,3), s4=Math.floor(s3/div)-rand(1,3);
+    if(s4<1) return newPuzzle();
+    let s5=Math.floor(s4/div)-1;
+    curAns=s5; formula=`f(n) = floor(f(n-1) ÷ ${div}) - k`; qText=`${s1} , ${s2} , ${s3} , ${s4} , ؟`;
+    curHint=`اقسم على ${div} تقريبا واطرح قليلا`;
+  }
+  else if(type===3){ // تربيع
+    let base=rand(2,5+Math.floor(lvl/3));
+    let s1=base, s2=s1*s1, s3=s2*s2>5000? s1+2 : s2, s4= s3*s3>10000? s3+5 : s3*s3;
+    // لتبسيط: نعمل نمط تربيع + رقم
+    let add=rand(1,5);
+    s1=rand(2,6); s2=s1*s1+add; s3=Math.floor(Math.sqrt(s2))*Math.floor(Math.sqrt(s2))+add; // لا
+    // نعيد تعريف اسهل: n^2
+    let n=rand(2,8); 
+    let seq=[n*n, (n+1)*(n+1), (n+2)*(n+2), (n+3)*(n+3)];
+    curAns=(n+4)*(n+4);
+    formula=`f(n) = n²`; qText=`${seq[0]} , ${seq[1]} , ${seq[2]} , ${seq[3]} , ؟`;
+    curHint=`مربعات كاملة: ${n}² , ${n+1}² ...`;
+  }
+  else if(type===4){ // تربيع + ضرب
+    let k=rand(2,4);
+    let n=rand(2,7);
+    let s1=n, s2=n*n*k, s3=Math.floor(Math.sqrt(s2))*k, s4=s3*s3;
+    // نبسط اكتر: تسلسل 2, 6, 36, 108 ...
+    let mul=rand(2,3);
+    s1=rand(1,4); s2=s1*s1*mul; s3=s2*mul; s4=s3*s3;
+    if(s4>100000) return newPuzzle();
+    let seq=[rand(2,5)];
+    seq[1]=seq[0]*seq[0];
+    seq[2]=seq[1]*mul;
+    seq[3]=seq[2]*seq[2];
+    if(seq[3]>50000) return newPuzzle();
+    curAns=seq[3]*mul;
+    formula=`×${mul} ثم تربيع بالتناوب`;
+    qText=`${seq[0]} , ${seq[1]} , ${seq[2]} , ${seq[3]} , ؟`;
+    curHint=`مرة تربيع ومرة ضرب ×${mul}`;
+  }
+  else if(type===5){ // جمع متزايد
+    let inc=rand(2,5)+Math.floor(lvl/3);
+    s1=rand(1,20); s2=s1+inc; s3=s2+inc*2; s4=s3+inc*3;
+    curAns=s4+inc*4;
+    formula=`+${inc} , +${inc*2} , +${inc*3} ...`;
+    qText=`${s1} , ${s2} , ${s3} , ${s4} , ؟`;
+    curHint=`الزيادة تكبر: +${inc} ثم +${inc*2} ثم +${inc*3}`;
+  }
+  else if(type===6){ // خوارزمية مركبة: (n*2 + n السابق)
+    let seq=[rand(1,5), rand(2,8)];
+    seq[2]=seq[1]*2+seq[0];
+    seq[3]=seq[2]*2+seq[1];
+    seq[4]=seq[3]*2+seq[2];
+    curAns=seq[4]*2+seq[3];
+    qText=`${seq[0]} , ${seq[1]} , ${seq[2]} , ${seq[3]} , ${seq[4]} , ؟`;
+    formula=`f(n)=f(n-1)×2 + f(n-2)`;
+    curHint=`الرقم الجديد = اللي قبله ×2 + اللي قبل اللي قبله`;
+  }
+  else { // اس 3 - 2
+    let base=rand(3,6+Math.floor(lvl/4));
+    let s1=base*base*base - 2;
+    let s2=(base+1)*(base+1)*(base+1) - 2;
+    let s3=(base+2)*(base+2)*(base+2) -2;
+    let s4=(base+3)*(base+3)*(base+3) -2;
+    curAns=(base+4)*(base+4)*(base+4)-2;
+    formula=`f(n)=n³ - 2`;
+    qText=`${s1} , ${s2} , ${s3} , ${s4} , ؟`;
+    curHint=`مكعب الرقم ناقص 2`;
+  }
+
+  algoEl.textContent=formula;
+  qEl.textContent=qText;
 }
-function resetGame() { points = 0; document.getElementById('score').innerText = 'النقاط: 0'; }
+
+function check(){
+  let v=parseInt(ansInput.value);
+  if(isNaN(v)) return;
+  if(v===curAns){
+    pts+=10+streak*2; streak++; if(streak%5===0) lvl++;
+    ptsEl.textContent=pts; lvlEl.textContent=lvl; streakEl.textContent=streak;
+    foxEl.textContent='🎉🦊'; foxEl.classList.add('correct');
+    setTimeout(()=>{foxEl.textContent='🦊'; foxEl.classList.remove('correct'); newPuzzle();},600);
+  } else {
+    streak=0; streakEl.textContent=0;
+    foxEl.textContent='😿'; hintEl.textContent=`غلط! الإجابة كانت ${curAns}`;
+    setTimeout(()=>{foxEl.textContent='🦊'; newPuzzle();},1500);
+  }
+}
+
+function showHint(){ hintEl.textContent='💡 ' + curHint; }
+
+ansInput.addEventListener('keydown', e=>{ if(e.key==='Enter') check(); });
+
+newPuzzle();
 </script>
 </body>
 </html>
