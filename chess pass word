@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Strength Checker</title>
+<style>
+  body { font-family: 'Cairo', sans-serif; background: #0f172a; color: white; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; }
+  .box { background: #1e293b; padding: 28px; border-radius: 18px; width: 92%; max-width: 430px; }
+  .top { display:flex; justify-content:space-between; align-items:center; }
+  .lang { background:#334155; border:none; color:white; padding:6px 12px; border-radius:20px; cursor:pointer; }
+  .input-wrap { position:relative; margin-top:18px; }
+  input { width:100%; padding:14px 45px 14px 14px; border-radius:10px; border:2px solid #334155; background:#0f172a; color:white; font-size:16px; box-sizing:border-box; outline:none; }
+  input:focus { border-color:#38bdf8; }
+  .icon-btn { position:absolute; left:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:18px; }
+  .bar { height:10px; background:#334155; border-radius:10px; overflow:hidden; margin-top:15px; }
+  .fill { height:100%; width:0%; transition:0.4s; }
+  .info { margin-top:10px; font-weight:bold; }
+  .checklist { font-size:13px; color:#94a3b8; margin-top:10px; line-height:1.8; }
+  .checklist span.done { color:#22c55e; }
+  .suggest { background:#0f172a; border:1px dashed #38bdf8; padding:12px; border-radius:10px; margin-top:16px; display:none; }
+  .btns { display:flex; gap:8px; margin-top:10px; }
+  .btn { flex:1; padding:10px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
+  .btn-blue { background:#38bdf8; color:#0f172a; }
+  .btn-green { background:#22c55e; color:white; }
+  .btn-gray { background:#334155; color:white; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="top">
+    <h2 id="title">اختبر قوة الباسورد</h2>
+    <button class="lang" onclick="toggleLang()" id="langBtn">EN</button>
+  </div>
+
+  <div class="input-wrap">
+    <input type="password" id="pass" placeholder="اكتب الباسورد هنا..." oninput="check()">
+    <button class="icon-btn" onclick="toggleEye()" id="eye">👁️</button>
+  </div>
+
+  <div class="bar"><div class="fill" id="fill"></div></div>
+  <div class="info" id="text">ابدأ الكتابة...</div>
+
+  <div class="checklist" id="list"></div>
+
+  <div class="suggest" id="suggestBox">
+    <div id="suggestLabel">اقتراح قوي:</div>
+    <b id="suggested" style="color:#38bdf8;"></b>
+    <div class="btns">
+      <button class="btn btn-green" onclick="useSuggested()" id="useBtn">استخدم</button>
+      <button class="btn btn-gray" onclick="copyText('suggested')" id="copySugBtn">نسخ</button>
+      <button class="btn btn-blue" onclick="generate()" id="newBtn">جديد</button>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:18px;">
+    <button class="btn btn-blue" onclick="generate()" id="genBtn">اقترح باسورد قوي</button>
+    <button class="btn btn-gray" onclick="copyText('pass', true)" id="copyBtn">نسخ الباسورد</button>
+  </div>
+</div>
+
+<script>
+let lang = 'ar';
+const t = {
+  ar: { title:'اختبر قوة الباسورد', ph:'اكتب الباسورد هنا...', start:'ابدأ الكتابة...', weak:'ضعيف جدا ❌', weak2:'ضعيف', mid:'متوسط 🙂', strong:'قوي جدا ✅', suggest:'اقتراح قوي:', use:'استخدم', copy:'نسخ', new:'جديد', gen:'اقترح باسورد قوي', copyPass:'نسخ الباسورد', copied:'تم النسخ!', checks:['٨ أحرف على الأقل','حرف كبير A-Z','حرف صغير a-z','رقم 0-9','رمز !@#$'] },
+  en: { title:'Password Strength Checker', ph:'Type password here...', start:'Start typing...', weak:'Very Weak ❌', weak2:'Weak', mid:'Medium 🙂', strong:'Very Strong ✅', suggest:'Strong suggestion:', use:'Use', copy:'Copy', new:'New', gen:'Suggest Strong Password', copyPass:'Copy Password', copied:'Copied!', checks:['At least 8 chars','Uppercase A-Z','Lowercase a-z','Number 0-9','Symbol !@#$'] }
+};
+
+function toggleLang(){
+  lang = lang==='ar' ? 'en' : 'ar';
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang==='ar' ? 'rtl' : 'ltr';
+  document.getElementById('langBtn').innerText = lang==='ar' ? 'EN' : 'AR';
+  const d = t[lang];
+  document.getElementById('title').innerText = d.title;
+  document.getElementById('pass').placeholder = d.ph;
+  document.getElementById('suggestLabel').innerText = d.suggest;
+  document.getElementById('useBtn').innerText = d.use;
+  document.getElementById('copySugBtn').innerText = d.copy;
+  document.getElementById('newBtn').innerText = d.new;
+  document.getElementById('genBtn').innerText = d.gen;
+  document.getElementById('copyBtn').innerText = d.copyPass;
+  check();
+}
+
+function toggleEye(){
+  const i = document.getElementById('pass');
+  i.type = i.type==='password' ? 'text' : 'password';
+}
+
+function check(){
+  const p = document.getElementById('pass').value;
+  const d = t[lang];
+  let score=0;
+  const conds = [ p.length>=8, /[A-Z]/.test(p), /[a-z]/.test(p), /[0-9]/.test(p), /[^A-Za-z0-9]/.test(p) ];
+  if(conds[0]) score+=25; if(p.length>=12) score+=15;
+  if(conds[1]) score+=15; if(conds[2]) score+=10; if(conds[3]) score+=15; if(conds[4]) score+=20;
+
+  let color='#ef4444', msg=d.weak;
+  if(score>40){ color='#f97316'; msg=d.weak2; }
+  if(score>60){ color='#eab308'; msg=d.mid; }
+  if(score>80){ color='#22c55e'; msg=d.strong; }
+
+  document.getElementById('fill').style.width = (p?score:0)+'%';
+  document.getElementById('fill').style.background = p?color:'#334155';
+  document.getElementById('text').innerText = p ? `${msg} (${score}/100)` : d.start;
+
+  document.getElementById('list').innerHTML = d.checks.map((c,i)=>`<div><span class="${conds[i]?'done':''}">${conds[i]?'✔':'○'} ${c}</span></div>`).join('');
+  document.getElementById('suggestBox').style.display = p && score<70 ? 'block' : 'none';
+  if(p && score<70 && !document.getElementById('suggested').innerText) generate(true);
+}
+
+function generate(silent=false){
+  const chars="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*";
+  let np=""; for(let i=0;i<16;i++) np+=chars[Math.floor(Math.random()*chars.length)];
+  document.getElementById('suggested').innerText=np;
+  document.getElementById('suggestBox').style.display='block';
+  if(!silent){ document.getElementById('pass').value=np; check(); }
+}
+
+function useSuggested(){ document.getElementById('pass').value=document.getElementById('suggested').innerText; check(); }
+
+function copyText(id, isInput=false){
+  const txt = isInput ? document.getElementById(id).value : document.getElementById(id).innerText;
+  navigator.clipboard.writeText(txt);
+  const d = t[lang];
+  const btn = document.getElementById(isInput?'copyBtn':'copySugBtn');
+  const old = btn.innerText; btn.innerText=d.copied; setTimeout(()=>btn.innerText=old,1200);
+}
+check();
+</script>
+</body>
+</html>
